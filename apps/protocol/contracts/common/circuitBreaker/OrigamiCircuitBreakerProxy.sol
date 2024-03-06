@@ -37,7 +37,7 @@ contract OrigamiCircuitBreakerProxy is IOrigamiCircuitBreakerProxy, OrigamiEleva
 
     constructor(
         address _initialOwner
-    ) OrigamiElevatedAccess(_initialOwner)
+    ) payable OrigamiElevatedAccess(_initialOwner) // GAS SAVING
     // solhint-disable-next-line no-empty-blocks
     {}
 

@@ -77,7 +77,7 @@ contract OrigamiLovTokenFlashAndBorrowManager is IOrigamiLovTokenFlashAndBorrowM
         address _lovToken,
         address _flashLoanProvider,
         address _borrowLend
-    ) OrigamiAbstractLovTokenManager(_initialOwner, _lovToken) {
+    ) payable OrigamiAbstractLovTokenManager(_initialOwner, _lovToken) {    // GAS SAVING
         _reserveToken = IERC20(_reserveToken_);
         _debtToken = IERC20(_debtToken_);
         flashLoanProvider = IOrigamiFlashLoanProvider(_flashLoanProvider);
@@ -388,7 +388,8 @@ contract OrigamiLovTokenFlashAndBorrowManager is IOrigamiLovTokenFlashAndBorrowM
             params.minNewAL, 
             params.maxNewAL, 
             AlValidationMode.HIGHER_THAN_BEFORE, 
-            force
+            force,
+            _borrowLend     // GAS SAVING
         );
 
         emit RebalanceUp(
@@ -425,8 +426,9 @@ contract OrigamiLovTokenFlashAndBorrowManager is IOrigamiLovTokenFlashAndBorrowM
 
         // Supply `reserveToken` into the money market, and borrow `debtToken`
         uint256 borrowAmount = flashLoanAmount + fee;
-        _reserveToken.safeTransfer(address(borrowLend), collateralSupplied);
-        borrowLend.supplyAndBorrow(collateralSupplied, borrowAmount, address(this));
+        IOrigamiBorrowAndLend _borrowLend = borrowLend;     // GAS SAVING: cache state variable read more than once in function
+        _reserveToken.safeTransfer(address(_borrowLend), collateralSupplied);
+        _borrowLend.supplyAndBorrow(collateralSupplied, borrowAmount, address(this));
 
         uint128 alRatioAfter = _validateAfterRebalance(
             cache, 
@@ -434,7 +436,8 @@ contract OrigamiLovTokenFlashAndBorrowManager is IOrigamiLovTokenFlashAndBorrowM
             params.minNewAL, 
             params.maxNewAL, 
             AlValidationMode.LOWER_THAN_BEFORE, 
-            force
+            force,
+            _borrowLend     // GAS SAVING
         );
 
         emit RebalanceDown(
@@ -488,8 +491,9 @@ contract OrigamiLovTokenFlashAndBorrowManager is IOrigamiLovTokenFlashAndBorrowM
             newReservesAmount = fromTokenAmount;
 
             // Supply into the money market
-            _reserveToken.safeTransfer(address(borrowLend), fromTokenAmount);
-            borrowLend.supply(fromTokenAmount);
+            IOrigamiBorrowAndLend _borrowLend = borrowLend;   // GAS SAVING: state variable with multiple reads should be cached in stack variable.
+            _reserveToken.safeTransfer(address(_borrowLend), fromTokenAmount);
+            _borrowLend.supply(fromTokenAmount);
         } else {
             revert CommonEventsAndErrors.InvalidToken(fromToken);
         }
@@ -605,11 +609,12 @@ contract OrigamiLovTokenFlashAndBorrowManager is IOrigamiLovTokenFlashAndBorrowM
         uint128 minNewAL, 
         uint128 maxNewAL,
         AlValidationMode alValidationMode,
-        bool force
+        bool force,
+        IOrigamiBorrowAndLend _borrowLend   // GAS SAVING
     ) private returns (uint128 alRatioAfter) {
         // Validate that the new A/L is still within the `rebalanceALRange`
         // Need to recalculate both the assets and liabilities in the cache
-        cache.assets = borrowLend.suppliedBalance();
+        cache.assets = _borrowLend.suppliedBalance();   // GAS SAVING
         cache.liabilities = liabilities(IOrigamiOracle.PriceType.SPOT_PRICE);
         alRatioAfter = _assetToLiabilityRatio(cache);
 

@@ -87,7 +87,7 @@ contract OrigamiCircuitBreakerAllUsersPerPeriod is IOrigamiCircuitBreaker, Origa
         uint32 _periodDuration,
         uint32 _nBuckets,
         uint128 _cap
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) { // GAS SAVING
         proxy = _proxy;
         _setConfig(_periodDuration, _nBuckets, _cap);
     }
@@ -96,7 +96,10 @@ contract OrigamiCircuitBreakerAllUsersPerPeriod is IOrigamiCircuitBreaker, Origa
      * @notice Verify the new amount requested does not breach the cap in this rolling period.
      */
     function preCheck(address /*onBehalfOf*/, uint256 amount) external override onlyProxy {
-        uint32 _nextBucketIndex = uint32(block.timestamp / secondsPerBucket);
+        uint32 _nextBucketIndex;
+        unchecked { // GAS SAVING
+            _nextBucketIndex = uint32(block.timestamp / secondsPerBucket);
+        }
         uint32 _currentBucketIndex = bucketIndex;
         uint32 _nBuckets = nBuckets;
         
@@ -131,7 +134,7 @@ contract OrigamiCircuitBreakerAllUsersPerPeriod is IOrigamiCircuitBreaker, Origa
      * @dev Since this resets the buckets, it should be executed via flashbots protect
      * such that it can't be frontrun (where the caps could be filled twice)
      */
-    function setConfig(uint32 _periodDuration, uint32 _nBuckets, uint128 _cap) external onlyElevatedAccess {
+    function setConfig(uint32 _periodDuration, uint32 _nBuckets, uint128 _cap) external payable onlyElevatedAccess {
         _setConfig(_periodDuration, _nBuckets, _cap);
     }
 
@@ -157,7 +160,10 @@ contract OrigamiCircuitBreakerAllUsersPerPeriod is IOrigamiCircuitBreaker, Origa
      * @notice What is the total utilisation so far in this `periodDuration`
      */
     function currentUtilisation() external view returns (uint256 amount) {
-        uint32 _nextBucketIndex = uint32(block.timestamp / secondsPerBucket);
+        uint32 _nextBucketIndex;
+        unchecked {     // GAS SAVING
+            _nextBucketIndex = uint32(block.timestamp / secondsPerBucket);
+        }
         uint32 _currentBucketIndex = bucketIndex;
         uint32 _nBuckets = nBuckets;
         
@@ -196,7 +202,9 @@ contract OrigamiCircuitBreakerAllUsersPerPeriod is IOrigamiCircuitBreaker, Origa
 
         nBuckets = _nBuckets;
         periodDuration = _periodDuration;
-        secondsPerBucket = _periodDuration / _nBuckets;
+        unchecked {
+            secondsPerBucket = _periodDuration / _nBuckets; // GAS SAVING division of uints can be unchecked
+        }
         cap = _cap;
         bucketIndex = 0;
 

@@ -8,7 +8,7 @@ import { OrigamiElevatedAccessBase } from "contracts/common/access/OrigamiElevat
  * @notice Inherit to add Owner roles for DAO elevated access.
  */ 
 abstract contract OrigamiElevatedAccess is OrigamiElevatedAccessBase {
-    constructor(address initialOwner) {
+    constructor(address initialOwner) payable { // GAS SAVING
         _init(initialOwner);
     }
 }

@@ -30,13 +30,12 @@ library Chainlink {
         (uint80 roundId, int256 feedValue, , uint256 lastUpdatedAt, uint80 answeredInRound) = self.oracle.latestRoundData();
 
         // Check for staleness
-		if (
-            answeredInRound <= roundId && 
-            block.timestamp - lastUpdatedAt > stalenessThreshold
-        ) {
-            revert IOrigamiOracle.StalePrice(address(self.oracle), lastUpdatedAt, feedValue);
-        }
-
+		if (answeredInRound <= roundId) {   // GAS SAVING
+            if (block.timestamp - lastUpdatedAt > stalenessThreshold) {
+                revert IOrigamiOracle.StalePrice(address(self.oracle), lastUpdatedAt, feedValue);
+            }
+        } 
+            
         // Check for negative price
         if (feedValue < 0) revert IOrigamiOracle.InvalidPrice(address(self.oracle), feedValue);
 

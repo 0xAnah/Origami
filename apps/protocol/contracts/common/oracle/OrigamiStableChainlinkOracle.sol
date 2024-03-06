@@ -53,7 +53,7 @@ contract OrigamiStableChainlinkOracle is OrigamiOracleBase, OrigamiElevatedAcces
 
     constructor (
         address _initialOwner,
-        string memory _description,
+        bytes32 _description,   // GAS SAVING
         address _baseAssetAddress,
         uint8 _baseAssetDecimals,
         address _quoteTokenAddress,
@@ -62,7 +62,7 @@ contract OrigamiStableChainlinkOracle is OrigamiOracleBase, OrigamiElevatedAcces
         address _spotPriceOracle,
         uint128 _spotPriceStalenessThreshold,
         Range.Data memory _validSpotPriceRange
-    )
+    ) payable    // GAS SAVING
         OrigamiOracleBase(
             _description, 
             _baseAssetAddress, 
@@ -90,7 +90,7 @@ contract OrigamiStableChainlinkOracle is OrigamiOracleBase, OrigamiElevatedAcces
     function setValidSpotPriceRange(
         uint128 _validSpotPriceFloor, 
         uint128 _validSpotPriceCeiling
-    ) external onlyElevatedAccess {
+    ) external payable onlyElevatedAccess { // GAS SAVING
         emit ValidPriceRangeSet(_validSpotPriceFloor, _validSpotPriceCeiling);
         validSpotPriceRange.set(_validSpotPriceFloor, _validSpotPriceCeiling);
     }

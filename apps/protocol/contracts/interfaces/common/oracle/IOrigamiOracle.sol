@@ -61,7 +61,7 @@ interface IOrigamiOracle {
     /**
      * @notice A human readable description for this oracle
      */
-    function description() external view returns (string memory);
+    function description() external view returns (bytes32);
 
     /**
      * @notice Return the latest oracle price, to `decimals` precision

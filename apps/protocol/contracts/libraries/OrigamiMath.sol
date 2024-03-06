@@ -33,7 +33,9 @@ library OrigamiMath {
         if (scalar == 1) {
             result = amount;
         } else if (roundingMode == Rounding.ROUND_DOWN) {
-            result = amount / scalar;
+            unchecked { // GAS SAVING
+                result = amount / scalar;
+            }
         } else {
             // ROUND_UP uses the same logic as OZ Math.ceilDiv()
             result = amount == 0 ? 0 : (amount - 1) / scalar + 1;
@@ -51,8 +53,10 @@ library OrigamiMath {
         Rounding roundingMode
     ) internal pure returns (uint256 result) {
         result = prbMulDiv(x, y, denominator);
-        if (roundingMode == Rounding.ROUND_UP && mulmod(x, y, denominator) != 0) {
-            result += 1;
+        if (roundingMode == Rounding.ROUND_UP) {
+            if (mulmod(x, y, denominator) != 0) {
+                result += 1;
+            }
         }
     }
 

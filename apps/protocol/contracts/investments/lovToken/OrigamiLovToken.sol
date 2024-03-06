@@ -60,7 +60,6 @@ contract OrigamiLovToken is IOrigamiLovToken, OrigamiInvestment {
      * @notice The last time the performance fee was collected
      */
     uint32 public override lastPerformanceFeeTime;
-
     constructor(
         address _initialOwner,
         string memory _name,
@@ -68,7 +67,7 @@ contract OrigamiLovToken is IOrigamiLovToken, OrigamiInvestment {
         uint256 _performanceFee,
         address _feeCollector,
         address _tokenPrices
-    ) OrigamiInvestment(_name, _symbol, _initialOwner) {
+    ) payable OrigamiInvestment(_name, _symbol, _initialOwner) {    // GAS SAVING
         if (_performanceFee > OrigamiMath.BASIS_POINTS_DIVISOR) revert CommonEventsAndErrors.InvalidParam();
         performanceFee = _performanceFee;
         feeCollector = _feeCollector;

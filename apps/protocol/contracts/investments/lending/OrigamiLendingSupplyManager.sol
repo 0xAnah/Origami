@@ -66,7 +66,7 @@ contract OrigamiLendingSupplyManager is IOrigamiLendingSupplyManager, OrigamiEle
         address _oToken,
         address _ovToken,
         address _circuitBreakerProxy
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {    // GAS SAVING
         asset = IERC20Metadata(_asset);
 
         // Set the asset scalar to convert from asset <--> oToken
@@ -106,7 +106,7 @@ contract OrigamiLendingSupplyManager is IOrigamiLendingSupplyManager, OrigamiEle
      * @param to Recipient address
      * @param amount Amount to recover
      */
-    function recoverToken(address token, address to, uint256 amount) external onlyElevatedAccess {
+    function recoverToken(address token, address to, uint256 amount) external payable onlyElevatedAccess {  // GAS SAVING
         emit CommonEventsAndErrors.TokenRecovered(to, token, amount);
         IERC20Metadata(token).safeTransfer(to, amount);
     }
@@ -126,8 +126,9 @@ contract OrigamiLendingSupplyManager is IOrigamiLendingSupplyManager, OrigamiEle
         if (quoteData.fromToken != address(asset)) revert CommonEventsAndErrors.InvalidToken(quoteData.fromToken);
 
         // Only the ovToken (which does it's own checks) and explicitly allowed contracts are allowed
-        if (account != ovToken && !_isAllowed(account)) revert CommonEventsAndErrors.InvalidAccess();
-
+        if (account != ovToken) {
+            if (!_isAllowed(account)) revert CommonEventsAndErrors.InvalidAccess();
+        }
         lendingClerk.deposit(quoteData.fromTokenAmount);
 
         // User gets 1:1 oToken for the token provided, but scaled up form the asset decimals

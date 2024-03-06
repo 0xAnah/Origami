@@ -25,6 +25,6 @@ abstract contract OrigamiInvestment is IOrigamiInvestment, MintableToken, Reentr
         string memory _name,
         string memory _symbol,
         address _initialOwner
-    ) MintableToken(_name, _symbol, _initialOwner) {
+    ) payable MintableToken(_name, _symbol, _initialOwner) {    // GAS SAVING: Payable functions cost less gas to execute, since the compiler does not have to add extra checks to ensure that a paymentwasn't provided. A constructor can safely be marked as payable, since only the deployer would be able to pass funds
     }
 }

@@ -97,7 +97,7 @@ abstract contract OrigamiAbstractLovTokenManager is IOrigamiLovTokenManager, Ori
     constructor(
         address _initialOwner,
         address _lovToken
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {    // GAS SAVING
         lovToken = IERC20(_lovToken);
         redeemableReservesBufferBps = uint64(OrigamiMath.BASIS_POINTS_DIVISOR);
     }
@@ -387,7 +387,7 @@ abstract contract OrigamiAbstractLovTokenManager is IOrigamiLovTokenManager, Ori
         quoteData.expectedToTokenAmount = toExitAmount;
         quoteData.minToTokenAmount = toExitAmount.subtractBps(maxSlippageBps);
         // quoteData.underlyingInvestmentQuoteData remains as bytes(0)
-
+        
         exitFeeBps = new uint256[](1);
         exitFeeBps[0] = _exitFeeRate;
     }

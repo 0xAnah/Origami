@@ -43,6 +43,9 @@ abstract contract RepricingToken is IRepricingToken, ERC20Permit, ERC20Burnable,
     /// @notice The time at which any accrued pendingReserves were last moved from `pendingReserves` -> `vestedReserves`
     uint256 public override lastVestingCheckpoint;
 
+    /// @notice The number of decimal on the reserveToken.
+    uint8 internal immutable reserveTokenDecimals;  // GAS SAVING
+
     event IssueSharesFromReserves(address indexed user, address indexed recipient, uint256 reserveTokenAmount, uint256 sharesAmount);
     event RedeemReservesFromShares(address indexed user, address indexed recipient, uint256 sharesAmount, uint256 reserveTokenAmount);
     event ReservesVestingDurationSet(uint256 duration);
@@ -59,26 +62,27 @@ abstract contract RepricingToken is IRepricingToken, ERC20Permit, ERC20Burnable,
         address _reserveToken, 
         uint256 _reservesVestingDuration, 
         address _initialOwner
-    )
+    )   payable      // GAS SAVING
         ERC20(_name, _symbol)
         ERC20Permit(_name)
         OrigamiElevatedAccess(_initialOwner)
     {
         reserveToken = _reserveToken;
         reservesVestingDuration = _reservesVestingDuration;
+        reserveTokenDecimals = ERC20(reserveToken).decimals();  // GAS SAVING since the decimal of reserveToken to is a constant we can perform external call once and save the result to an immutable variable.
     }
 
     /// @notice Update the vesting duration for any new reserves being added.
     /// @dev This will first checkpoint any pending reserves, any carried over amount will be
     /// spread out over the new duration.
-    function setReservesVestingDuration(uint256 _reservesVestingDuration) external onlyElevatedAccess {
+    function setReservesVestingDuration(uint256 _reservesVestingDuration) external payable onlyElevatedAccess {
         _checkpointAndAddReserves(0);
         reservesVestingDuration = _reservesVestingDuration;
         emit ReservesVestingDurationSet(_reservesVestingDuration);
     }
 
     /// @notice Owner can recover tokens
-    function recoverToken(address _token, address _to, uint256 _amount) external onlyElevatedAccess {
+    function recoverToken(address _token, address _to, uint256 _amount) external payable onlyElevatedAccess {
         // If the _token is the reserve token, the owner can only remove any surplus reserves (ie donation reserves).
         // It can't dip into the actual user or protocol added reserves. 
         // This includes any vested rewards plus any unvested (but pending) reserves
@@ -94,7 +98,7 @@ abstract contract RepricingToken is IRepricingToken, ERC20Permit, ERC20Burnable,
     /// @notice Returns the number of decimals used to get its user representation.
     /// @dev Uses the underlying reserve token's decimals
     function decimals() public view override returns (uint8) {
-        return ERC20(reserveToken).decimals();
+        return reserveTokenDecimals;    // GAS SAVING
     }
 
     /// @notice The current amount of fully vested reserves plus any accrued pending reserves
@@ -136,7 +140,10 @@ abstract contract RepricingToken is IRepricingToken, ERC20Permit, ERC20Burnable,
     function unvestedReserves() public view override returns (uint256 accrued, uint256 outstanding) {
         uint256 _pendingReserves = pendingReserves;
         uint256 _vestingDuration = reservesVestingDuration;
-        uint256 secsSinceLastCheckpoint = block.timestamp - lastVestingCheckpoint;
+        uint256 secsSinceLastCheckpoint;
+        unchecked {     // GAS SAVING: calculation can be unchecked
+            secsSinceLastCheckpoint = block.timestamp - lastVestingCheckpoint;
+        }
 
         // The whole amount has been accrued (vested but not yet added to `vestedReserves`) 
         // if the time since the last checkpoint has passed the vesting duration

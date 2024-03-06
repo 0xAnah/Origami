@@ -52,7 +52,7 @@ contract LinearWithKinkInterestRateModel is BaseInterestRateModel, OrigamiElevat
         uint80 _maxInterestRate, 
         uint256 _kinkUtilizationRatio, 
         uint80 _kinkInterestRate
-    ) OrigamiElevatedAccess(_initialOwner)
+    ) payable OrigamiElevatedAccess(_initialOwner) // GAS SAVING
     {
         _setRateParams(
             _baseInterestRate, 
@@ -70,7 +70,7 @@ contract LinearWithKinkInterestRateModel is BaseInterestRateModel, OrigamiElevat
         uint80 _maxInterestRate, 
         uint256 _kinkUtilizationRatio, 
         uint80 _kinkInterestRate
-    ) external onlyElevatedAccess {
+    ) external payable onlyElevatedAccess {     // GAS SAVING
         _setRateParams(
             _baseInterestRate, 
             _maxInterestRate, 
@@ -90,12 +90,11 @@ contract LinearWithKinkInterestRateModel is BaseInterestRateModel, OrigamiElevat
         if (_baseInterestRate > _kinkInterestRate) revert CommonEventsAndErrors.InvalidParam();
         if (_kinkInterestRate > _maxInterestRate) revert CommonEventsAndErrors.InvalidParam();
 
-        rateParams = RateParams({
-            baseInterestRate: _baseInterestRate,
-            maxInterestRate: _maxInterestRate,
-            kinkInterestRate: _kinkInterestRate,
-            kinkUtilizationRatio: _kinkUtilizationRatio
-        });
+        rateParams.baseInterestRate = _baseInterestRate;    // GAS SAVING Using named arguments for struct means that the compiler needs to organize the fields in memory before doing the assignment, which wastes gas. Setting each field directly in storage (using dot-notation) is cheaper.
+        rateParams.maxInterestRate = _maxInterestRate;
+        rateParams.kinkInterestRate = _kinkInterestRate;
+        rateParams.kinkUtilizationRatio = _kinkUtilizationRatio;
+
         emit InterestRateParamsSet(
             _baseInterestRate, 
             _maxInterestRate, 
@@ -109,15 +108,16 @@ contract LinearWithKinkInterestRateModel is BaseInterestRateModel, OrigamiElevat
      * @param utilizationRatio The utilization ratio scaled to `PRECISION`
      */
     function computeInterestRateImpl(uint256 utilizationRatio) internal override view returns (uint96) {
-        RateParams memory _rateParams = rateParams;
+        RateParams storage _rateParams = rateParams;     //  GAS SAVING: no need to copy storage variables into memory 
 
         uint256 interestRate;
-        if (utilizationRatio > _rateParams.kinkUtilizationRatio) {
+        uint256 kinkUtilizationRatio = _rateParams.kinkUtilizationRatio;    // GAS SAVING: cache multiple reads of storage variable member
+        if (utilizationRatio > kinkUtilizationRatio) {
             // linearly interpolated point between kink IR and max IR
             interestRate = OrigamiMath.mulDiv(
-                utilizationRatio - _rateParams.kinkUtilizationRatio,
+                utilizationRatio - kinkUtilizationRatio,
                 _rateParams.maxInterestRate - _rateParams.kinkInterestRate,
-                PRECISION - _rateParams.kinkUtilizationRatio,
+                PRECISION - kinkUtilizationRatio,
                 OrigamiMath.Rounding.ROUND_UP
             ) + _rateParams.kinkInterestRate;
         } else {
@@ -125,7 +125,7 @@ contract LinearWithKinkInterestRateModel is BaseInterestRateModel, OrigamiElevat
             interestRate = OrigamiMath.mulDiv(
                 utilizationRatio,
                 _rateParams.kinkInterestRate - _rateParams.baseInterestRate,
-                _rateParams.kinkUtilizationRatio,
+                kinkUtilizationRatio,
                 OrigamiMath.Rounding.ROUND_UP
             ) + _rateParams.baseInterestRate;
         }

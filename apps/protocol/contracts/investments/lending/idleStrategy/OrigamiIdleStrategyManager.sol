@@ -67,7 +67,7 @@ contract OrigamiIdleStrategyManager is IOrigamiIdleStrategyManager, OrigamiEleva
     constructor(
         address _initialOwner,
         address _asset
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {     // GAS SAVING
         asset = IERC20(_asset);
     }
 

@@ -37,7 +37,7 @@ contract OrigamiAaveV3FlashLoanProvider is IOrigamiFlashLoanProvider, IFlashLoan
      */
     uint16 public constant REFERRAL_CODE = 0;
 
-    constructor(address _aavePoolAddressProvider) {
+    constructor(address _aavePoolAddressProvider) payable { // GAS SAVING
         ADDRESSES_PROVIDER = IPoolAddressesProvider(_aavePoolAddressProvider);
         POOL = IPool(ADDRESSES_PROVIDER.getPool());        
     }
@@ -49,7 +49,7 @@ contract OrigamiAaveV3FlashLoanProvider is IOrigamiFlashLoanProvider, IFlashLoan
      * The loaned amount is always repaid to Aave/Spark within the same transaction.
      * @dev Upon FL success, Aave/Spark will call the `executeOperation()` callback
      */
-    function flashLoan(IERC20 token, uint256 amount, bytes memory params) external override {
+    function flashLoan(IERC20 token, uint256 amount, bytes calldata params) external override { // GAS SAVING
         address[] memory _tokens = new address[](1);
         _tokens[0] = address(token);
         uint256[] memory _amounts = new uint256[](1);

@@ -42,16 +42,16 @@ abstract contract OrigamiOracleBase is IOrigamiOracle {
     /**
      * @notice A human readable description for this origami oracle
      */
-    string public override description;
+    bytes32 public immutable override description;  // GAS SAVING
 
     constructor(
-        string memory _description,
+        bytes32 _description,   // GAS SAVING
         address _baseAssetAddress,
         uint8 _baseAssetDecimals,
         address _quoteAssetAddress,
         uint8 _quoteAssetDecimals
-    ) {
-        description = _description;
+    ) payable {  // GAS SAVING
+        description = _description;     // GAS SAVING
         baseAsset = _baseAssetAddress;
         quoteAsset = _quoteAssetAddress;
         if (_quoteAssetDecimals > decimals + _baseAssetDecimals) revert CommonEventsAndErrors.InvalidParam();

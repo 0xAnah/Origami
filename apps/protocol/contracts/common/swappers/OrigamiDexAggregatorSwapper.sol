@@ -31,7 +31,7 @@ contract OrigamiDexAggregatorSwapper is IOrigamiSwapper, OrigamiElevatedAccess {
     constructor(
         address _initialOwner,
         address _router
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {  // GAS SAVING
         router = _router;
     }
 
@@ -41,7 +41,7 @@ contract OrigamiDexAggregatorSwapper is IOrigamiSwapper, OrigamiElevatedAccess {
      * @param to Recipient address
      * @param amount Amount to recover
      */
-    function recoverToken(address token, address to, uint256 amount) external onlyElevatedAccess {
+    function recoverToken(address token, address to, uint256 amount) external payable onlyElevatedAccess {  // GAS SAVING
         emit CommonEventsAndErrors.TokenRecovered(to, token, amount);
         IERC20(token).safeTransfer(to, amount);
     }

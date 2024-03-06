@@ -62,7 +62,7 @@ contract OrigamiLendingRewardsMinter is IOrigamiLendingRewardsMinter, OrigamiEle
         address _debtToken,
         uint256 _carryOverRate,
         address _feeCollector
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {    // GAS SAVING
         oToken = IMintableToken(_oToken);
         ovToken = IOrigamiInvestmentVault(_ovToken);
         debtToken = IOrigamiDebtToken(_debtToken);
@@ -97,7 +97,7 @@ contract OrigamiLendingRewardsMinter is IOrigamiLendingRewardsMinter, OrigamiEle
      * @param to Recipient address
      * @param amount Amount to recover
      */
-    function recoverToken(address token, address to, uint256 amount) external onlyElevatedAccess {
+    function recoverToken(address token, address to, uint256 amount) external payable onlyElevatedAccess {
         emit CommonEventsAndErrors.TokenRecovered(to, token, amount);
         IERC20(token).safeTransfer(to, amount);
     }

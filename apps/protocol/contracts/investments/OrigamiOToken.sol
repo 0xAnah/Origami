@@ -37,7 +37,7 @@ contract OrigamiOToken is OrigamiInvestment, IOrigamiOToken {
         address _initialOwner,
         string memory _name,
         string memory _symbol
-    ) OrigamiInvestment(_name, _symbol, _initialOwner) {}
+    ) payable OrigamiInvestment(_name, _symbol, _initialOwner) {}   // GAS SAVING
 
     /**
      * @notice Set the Origami oToken Manager.

@@ -81,7 +81,7 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
         string memory _name,
         string memory _symbol,
         address _initialOwner
-    ) OrigamiElevatedAccess(_initialOwner)
+    ) payable OrigamiElevatedAccess(_initialOwner)  // GAS SAVING
     {
         name = _name;
         symbol = _symbol;
@@ -102,8 +102,9 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
         if (_rate > MAX_INTEREST_RATE) revert CommonEventsAndErrors.InvalidParam();
 
         // Can be set by either a debt minter or elevated access
-        if (!minters[msg.sender] && !isElevatedAccess(msg.sender, msg.sig)) revert CommonEventsAndErrors.InvalidAccess();
-
+        if (!minters[msg.sender]) {
+            if (!isElevatedAccess(msg.sender, msg.sig)) revert CommonEventsAndErrors.InvalidAccess();
+        }
         // First checkpoint the debtor interest, then update
         Debtor storage debtor = debtors[_debtor];
         _getDebtorPosition(debtor);
@@ -225,8 +226,7 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
 
         // Use the RO (read-only) version in order to tally the total interestDelta
         // to save multiple sload/sstore of estimatedTotalInterest
-        uint256 _length = _debtors.length;
-        for (uint256 i; i < _length; ++i) {
+        for (uint256 i; i < _debtors.length; ++i) {     // GAS SAVING
             _debtorAddr = _debtors[i];
             if (_debtorAddr == address(0)) revert CommonEventsAndErrors.InvalidAddress(_debtorAddr);
             _debtor = debtors[_debtorAddr];
@@ -234,7 +234,7 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
             _interestDelta += _debtorPosition.interestDelta;
             _debtor.interestCheckpoint = _debtorPosition.interest;
             _debtor.timeCheckpoint = uint32(block.timestamp);
-            emit Checkpoint(_debtorAddr, _debtor.principal, _debtor.interestCheckpoint);
+            emit Checkpoint(_debtorAddr, _debtor.principal, _debtorPosition.interest);    //GAS SAVING: replace _debtor.interestCheckpoint with _debtorPosition.interest
         }
         estimatedTotalInterest += _interestDelta;
     }
@@ -245,11 +245,10 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
     function currentDebtsOf(address[] calldata _debtors) external override view returns (
         DebtOwed[] memory debtsOwed
     ) {
-        uint256 _length = _debtors.length;
-        debtsOwed = new DebtOwed[](_length);
+        debtsOwed = new DebtOwed[](_debtors.length);
         DebtorPosition memory _debtorPosition;
         
-        for (uint256 i; i < _length; ++i) {
+        for (uint256 i; i < _debtors.length; ++i) {     // GAS SAVING
             _debtorPosition = _getDebtorPositionRO(debtors[_debtors[i]]);
             debtsOwed[i] = DebtOwed(
                 _debtorPosition.principal, 
@@ -298,9 +297,8 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
      */
     function totalSupplyExcluding(address[] calldata debtorList) external override view returns (uint256) {
         Debtor storage _debtor;
-        uint256 _length = debtorList.length;
         uint256 _excludeSum;
-        for (uint256 i; i < _length; ++i) {
+        for (uint256 i; i < debtorList.length; ++i) {   // GAS SAVING: It is more gas expensive to cache calldata
             _debtor = debtors[debtorList[i]];
             unchecked {
                 _excludeSum += _debtor.principal + _debtor.interestCheckpoint;
@@ -484,7 +482,7 @@ contract OrigamiDebtToken is IOrigamiDebtToken, OrigamiElevatedAccess {
      * @param to Recipient address
      * @param amount Amount to recover
      */
-    function recoverToken(address token, address to, uint256 amount) external onlyElevatedAccess {
+    function recoverToken(address token, address to, uint256 amount) external payable onlyElevatedAccess {
         emit CommonEventsAndErrors.TokenRecovered(to, token, amount);
         IERC20(token).safeTransfer(to, amount);
     }

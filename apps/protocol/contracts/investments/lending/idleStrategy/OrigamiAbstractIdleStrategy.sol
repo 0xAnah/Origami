@@ -20,7 +20,7 @@ abstract contract OrigamiAbstractIdleStrategy is IOrigamiIdleStrategy, OrigamiEl
     constructor(
         address _initialOwner,
         address _asset
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {     // GAS SAVING
         asset = IERC20(_asset);
     }
 

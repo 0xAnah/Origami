@@ -63,7 +63,7 @@ contract OrigamiAaveV3BorrowAndLend is IOrigamiAaveV3BorrowAndLend, OrigamiEleva
     /**
      * @notice The referral code used when supplying/borrowing in Aave/Spark
      */
-    uint16 public override referralCode = 0;
+    uint16 public override referralCode;    // GAS SAVING do not initialize state variable to their default values
 
     /**
      * @dev The number of Aave/Spark aToken shares are tracked manually rather than relying on
@@ -83,7 +83,7 @@ contract OrigamiAaveV3BorrowAndLend is IOrigamiAaveV3BorrowAndLend, OrigamiEleva
         address _aavePool,
         uint256 _expectedDecimals,
         uint8 _defaultEMode
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {     // GAS SAVING
         supplyToken = _supplyToken;
         borrowToken = _borrowToken;
         
@@ -218,7 +218,7 @@ contract OrigamiAaveV3BorrowAndLend is IOrigamiAaveV3BorrowAndLend, OrigamiEleva
      * @param to Recipient address
      * @param amount Amount to recover
      */
-    function recoverToken(address token, address to, uint256 amount) external onlyElevatedAccess {       
+    function recoverToken(address token, address to, uint256 amount) external payable onlyElevatedAccess {          // GAS SAVING
         // If the token to recover is the aaveAtoken, can only remove any *surplus* reserves (ie donation reserves).
         // It can't dip into the actual user added reserves. 
         if (token == address(aaveAToken)) {

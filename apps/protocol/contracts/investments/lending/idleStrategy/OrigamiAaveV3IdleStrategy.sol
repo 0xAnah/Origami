@@ -31,7 +31,7 @@ contract OrigamiAaveV3IdleStrategy is OrigamiAbstractIdleStrategy {
         address _initialOwner,
         address _asset,
         address _poolAddressProvider
-    ) OrigamiAbstractIdleStrategy(_initialOwner, _asset) {
+    ) payable OrigamiAbstractIdleStrategy(_initialOwner, _asset) {   // GAS SAVING
         lendingPool = IPool(IPoolAddressesProvider(_poolAddressProvider).getPool());
         aToken = IERC20(lendingPool.getReserveData(_asset).aTokenAddress);
 

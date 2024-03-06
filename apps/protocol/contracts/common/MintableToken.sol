@@ -28,7 +28,7 @@ abstract contract MintableToken is IMintableToken, ERC20Permit, ERC20Burnable, O
 
     error CannotMintOrBurn(address caller);
 
-    constructor(string memory _name, string memory _symbol, address _initialOwner)
+    constructor(string memory _name, string memory _symbol, address _initialOwner) payable  // GAS SAVING
         ERC20(_name, _symbol) 
         ERC20Permit(_name) 
         OrigamiElevatedAccess(_initialOwner)

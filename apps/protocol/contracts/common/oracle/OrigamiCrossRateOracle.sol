@@ -30,14 +30,14 @@ contract OrigamiCrossRateOracle is OrigamiOracleBase {
     IOrigamiOracle public immutable quoteAssetOracle;
 
     constructor (
-        string memory _description,
+        bytes32 _description,   //GAS SAVING
         address _baseAssetAddress,
         address _baseAssetOracle,
         uint8 _baseAssetDecimals,
         address _quoteTokenAddress,
         address _quoteAssetOracle,
         uint8 _quoteAssetDecimals
-    )
+    )   payable  // GAS SAVING
         OrigamiOracleBase(
             _description, 
             _baseAssetAddress, 

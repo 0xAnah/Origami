@@ -107,7 +107,7 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
         address _circuitBreakerProxy,
         address _supplyManager,
         address _globalInterestRateModel
-    ) OrigamiElevatedAccess(_initialOwner) {
+    ) payable OrigamiElevatedAccess(_initialOwner) {    // GAS SAVING
         asset = IERC20Metadata(_asset);
         oToken = IOrigamiOToken(_oToken);
         idleStrategyManager = IOrigamiIdleStrategyManager(_idleStrategyManager);
@@ -309,7 +309,7 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
      * @param to Recipient address
      * @param amount Amount to recover
      */
-    function recoverToken(address token, address to, uint256 amount) external onlyElevatedAccess {
+    function recoverToken(address token, address to, uint256 amount) external payable onlyElevatedAccess {
         emit CommonEventsAndErrors.TokenRecovered(to, token, amount);
         IERC20Metadata(token).safeTransfer(to, amount);
     }
@@ -374,8 +374,7 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
      * @param recipient The receiving address of the `asset` tokens
      */
     function borrow(uint256 amount, address recipient) external override {
-        BorrowerConfig storage _borrowerConfig = _getBorrowerConfig(msg.sender);
-        _borrow(msg.sender, recipient, _borrowerConfig, amount);
+        _borrow(msg.sender, recipient, _getBorrowerConfig(msg.sender), amount);     // GAS SAVING: declaring unnecessay variables
     }
 
     /**
@@ -467,8 +466,10 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
         IOrigamiLendingBorrower.AssetBalance[] memory assetBalances,
         uint256 debtTokenBalance
     ) {
-        if (!_borrowersSet.contains(borrower) && borrower != address(idleStrategyManager)) {
-            return (new IOrigamiLendingBorrower.AssetBalance[](0), 0);
+        if (borrower != address(idleStrategyManager)) { // GAS SAVING
+            if (!_borrowersSet.contains(borrower)) {
+                return (new IOrigamiLendingBorrower.AssetBalance[](0), 0);
+            }
         }
 
         IOrigamiLendingBorrower _borrower = IOrigamiLendingBorrower(borrower);
@@ -481,8 +482,10 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
      * @dev Represented as `PRECISION` decimals
      */
     function borrowerDebt(address borrower) external override view returns (uint256) {
-        if (!_borrowersSet.contains(borrower) && borrower != address(idleStrategyManager)) {
-            return 0;
+        if (borrower != address(idleStrategyManager)){
+            if (!_borrowersSet.contains(borrower)) {
+                return 0;
+            }
         }
         
         return debtToken.balanceOf(borrower);
@@ -763,8 +766,9 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
      */
     function _calculateGlobalInterestRate(bool validateUR) private view returns (uint96) {
         uint256 ur = globalUtilisationRatio();
-        if (validateUR && ur > PRECISION) revert AboveMaxUtilisation(ur);
-
+        if (validateUR) {
+            if (ur > PRECISION) revert AboveMaxUtilisation(ur);
+        }
         return globalInterestRateModel.calculateInterestRate(ur);
     }
 
@@ -779,8 +783,9 @@ contract OrigamiLendingClerk is IOrigamiLendingClerk, OrigamiElevatedAccess {
         bool validateUR
     ) private view returns (uint96) {
         uint256 ur = _borrowerUtilisationRatio(borrower, borrowerConfig);
-        if (validateUR && ur > PRECISION) revert AboveMaxUtilisation(ur);
-        
+        if (validateUR) {
+            if (ur > PRECISION) revert AboveMaxUtilisation(ur);
+        }
         return borrowerConfig.interestRateModel.calculateInterestRate(ur);
     }
     

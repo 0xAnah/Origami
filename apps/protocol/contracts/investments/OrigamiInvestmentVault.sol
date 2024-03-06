@@ -47,7 +47,7 @@ contract OrigamiInvestmentVault is IOrigamiInvestmentVault, RepricingToken, Whit
         address _tokenPrices,
         uint256 _performanceFee,
         uint256 _reservesActualisationDuration
-    ) RepricingToken(_name, _symbol, _origamiInvestment, _reservesActualisationDuration, _initialOwner) {
+    ) payable RepricingToken(_name, _symbol, _origamiInvestment, _reservesActualisationDuration, _initialOwner) {   // GAS SAVING: Payable functions cost less gas to execute, since the compiler does not have to add extra checks to ensure that a paymentwasn't provided. A constructor can safely be marked as payable, since only the deployer would be able to pass funds
         tokenPrices = ITokenPrices(_tokenPrices);
         if (_performanceFee > OrigamiMath.BASIS_POINTS_DIVISOR) revert CommonEventsAndErrors.InvalidParam();
         performanceFee = _performanceFee;
@@ -291,6 +291,7 @@ contract OrigamiInvestmentVault is IOrigamiInvestmentVault, RepricingToken, Whit
         // and then get a quote from the underlying Origami Investment for the number of toTokens to expect
         if (toToken == reserveToken) {
             // If it's the reserves, can redeem reserves directly from the shares.
+            
             quoteData.investmentTokenAmount = investmentAmount;
             quoteData.toToken = toToken;
             quoteData.maxSlippageBps = maxSlippageBps;

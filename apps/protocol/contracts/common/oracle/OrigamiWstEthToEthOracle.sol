@@ -26,14 +26,14 @@ contract OrigamiWstEthToEthOracle is OrigamiOracleBase {
     IOrigamiOracle public immutable stEthToEthOracle;
 
     constructor (
-        string memory _description,
+        bytes32 _description,   // GAS SAVING
         address _wstEthAddress,
         uint8 _wstEthDecimals,
         address _ethAddress,
         uint8 _ethDecimals,
         address _stEth,
         address _stEthToEthOracle
-    ) 
+    ) payable    // GAS SAVING
         OrigamiOracleBase(
             _description, 
             _wstEthAddress, 

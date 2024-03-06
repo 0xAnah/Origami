@@ -85,7 +85,7 @@ contract OrigamiLovTokenErc4626Manager is IOrigamiLovTokenErc4626Manager, Origam
         address _debtAsset_,
         address _reserveToken_,
         address _lovToken
-    ) OrigamiAbstractLovTokenManager(_initialOwner, _lovToken) {
+    ) payable OrigamiAbstractLovTokenManager(_initialOwner, _lovToken) {  // GAS SAVING
         depositAsset = IERC20Metadata(_depositAsset);
         _debtAsset = IERC20Metadata(_debtAsset_);
         _reserveToken = IERC4626(_reserveToken_);
